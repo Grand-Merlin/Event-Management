@@ -11,6 +11,8 @@ class Event extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['name', 'description', 'start_time', 'end_time', 'user_id'];
+
     // le type de retour est facultatif mais reste une bonne pratique
     public function user(): BelongsTo
     {
