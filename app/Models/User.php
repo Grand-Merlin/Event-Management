@@ -27,7 +27,7 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    // permet de modifier la serialisation
+    // permet de modifier la serialisation, ici password et remember_token ne seront jamais serializer
     protected $hidden = [
         'password',
         'remember_token',

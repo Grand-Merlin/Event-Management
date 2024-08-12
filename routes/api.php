@@ -12,6 +12,9 @@ Route::get('/user', function (Request $request) {
 Route::apiResource('events', EventController::class);
 
 // Ressource imbriquée, cela signifie que les participant sont associer a un evemenet specifique (l'URL refletera cette relation perent-enfant)
-Route::apiResource('events.atendees', AttendeeController::class)
+Route::apiResource('events.attendees', AttendeeController::class)
 // le scope permet de rechercher le participant, uniquement parmis les participant d'un evenement specifique
-    ->scoped(['attendee' => 'event']);
+    // ->scoped(['attendee' => 'event']);
+// avec les roussource, plus besoin de determiner la relation
+// on specifie egalement qu'on ne vx pas utiliser la methode update (on l'a commentéé)
+->scoped()->except(['update']);

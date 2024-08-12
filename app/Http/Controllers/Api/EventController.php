@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\EventResource;
 use Illuminate\Http\Request;
 use \App\Models\Event;
 
@@ -13,9 +14,24 @@ class EventController extends Controller
      */
     public function index()
     {
+        /* #region V1 */
         // On px retourner directement les models depuis les actions dans le controleur (index, show, etc...)
         // laravel s'occupe de la serialization (json, xml, etc...)(serialization = transformation d'un object en format de stockage, typiquemen json ou xml)
-        return \App\Models\Event::all();
+        // return \App\Models\Event::all();
+        /* #endregion */
+
+
+        /* #region V2 sans charger les relation */
+        // return EventResource::collection(Event::all());
+        /* #endregion */
+
+        /* #region V3 en chargant la relation 'user' du model (permet le whenLoaded) */
+        // return EventResource::collection(Event::with('user')->get());
+        /* #endregion */
+
+        /* #region V4 en utilisant paginate au lieu de get */
+        return EventResource::collection(Event::with('user')->paginate());
+        /* #endregion */
     }
 
     /**
@@ -54,7 +70,12 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        return $event;
+        // return $event;
+
+        //permet de charger les relations 'user' et 'attendees' du model
+        $event->load('user', 'attendees');
+        // permet de renvoyée les ressources sous forme de tableau en passant par EventReource
+        return new EventResource($event);
     }
 
     /**
@@ -72,7 +93,10 @@ class EventController extends Controller
                 // lorsqu'on met a jour un objet, il n'est plus necessaire de specifier tous les attribut obligatoirement(on px en garder certain deja cree avec la methode store)
             ])
         );
-        return $event; // la bonne pratique est de retourner la roussource modifiée
+        // return $event; // la bonne pratique est de retourner la roussource modifiée
+
+        // permet de renvoyée les ressources sous forme de tableau en passant par EventReource
+        return new EventResource($event);
     }
 
     /**
