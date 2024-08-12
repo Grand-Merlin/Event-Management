@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\EventResource;
+use App\Http\Traits\CanLoadRelationships;
 use Illuminate\Http\Request;
 use \App\Models\Event;
-use Illuminate\Database\Eloquent\Relations\Relation;
 
 class EventController extends Controller
 {
+    // import du trait
+    use CanLoadRelationships;
+    // c'est ici que l'on controle ce qui px etre charger de ce que ne px pas l'etre (apres le ?include dans l'url)
+    private array $relations = ['user', 'attendees', 'attendees.user'];
     /**
      * Display a listing of the resource.
      */
@@ -35,40 +39,50 @@ class EventController extends Controller
         // $this->shouldIncludeRelation('user');
         // return EventResource::collection(Event::with('user')->paginate());
         /* #endregion */
-    
-        $query = Event::query();
-        // c'est ici que l'on controle ce qui px etre charger de ce que ne px pas l'etre (apres le ?include dans l'url)
-        $relations = ['user', 'attendees', 'attendees.user'];
 
-        foreach($relations as $relation){
-            //when applique une condition a la requete. elle prend deux parametre: une condition, et une callback si true
-            $query->when(
-                $this->shouldIncludeRelation($relation),
-                //$q = requete en cours ($query)
-                fn($q)=>$q->with($relation)
-            );
-        }
+        /* #region cette partie est declarée au dessou du use */
+        // c'est ici que l'on controle ce qui px etre charger de ce que ne px pas l'etre (apres le ?include dans l'url)
+        // $relations = ['user', 'attendees', 'attendees.user'];
+        /* #endregion */
+
+        // $query = $this->loadRelationships(Event::query(), $relations);
+
+        // grace au trait, ceci est mtn la seul action a faire dans chaque endroit on l'on vx charger les relation
+        $query = $this->loadRelationships(Event::query());
+
+        /* #region ce code se trouve desormais dans le trait */
+        // foreach ($relations as $relation) {
+        //     //when applique une condition a la requete. elle prend deux parametre: une condition, et une callback si true
+        //     $query->when(
+        //         $this->shouldIncludeRelation($relation),
+        //         //$q = requete en cours ($query)
+        //         fn($q) => $q->with($relation)
+        //     );
+        // }
+        /* #endregion */
 
         return EventResource::collection(
             $query->latest()->paginate()
         );
     }
 
-    protected function shouldIncludeRelation(string $relation): bool
-        {
-            // extraire la valeur du parametre 'include' dans l'URL
-            $include = request()->query('include');
+    /* #region Cette methode à été deplacée dans le trait (CanLoadRelationships) */
+    // protected function shouldIncludeRelation(string $relation): bool
+    // {
+    //     // extraire la valeur du parametre 'include' dans l'URL
+    //     $include = request()->query('include');
 
-            if(!$include){
-                return false;
-            }
-            // la methode explode permet de cree un tableau a partir d'une chaine de caractere avec un delimiteur specifier, dans ce cas, c'est une virgule (,)
-            $relations = array_map('trim', explode(',',$include));
-            // dd($relations);
+    //     if (!$include) {
+    //         return false;
+    //     }
+    //     // la methode explode permet de cree un tableau a partir d'une chaine de caractere avec un delimiteur specifier, dans ce cas, c'est une virgule (,)
+    //     $relations = array_map('trim', explode(',', $include));
+    //     // dd($relations);
 
-            // methode pour voir si relation est bien dans le tableau relations, utiliser pour savoire quelle relation doivent etre incluse dans le traitement de la reponse et lesquelle pas
-            return in_array($relation, $relations);
-        }
+    //     // methode pour voir si relation est bien dans le tableau relations, utiliser pour savoire quelle relation doivent etre incluse dans le traitement de la reponse et lesquelle pas
+    //     return in_array($relation, $relations);
+    // }
+    /* #endregion */
 
     /**
      * Store a newly created resource in storage.
@@ -98,7 +112,7 @@ class EventController extends Controller
         ]);
         /* #endregion */
 
-        return $event; // la bonne pratique est de retourner la roussource modifiée
+        return new EventResource($this->loadRelationships($event)); // la bonne pratique est de retourner la roussource modifiée
     }
 
     /**
@@ -106,12 +120,16 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        // return $event;
+        /* #region V1 */
+        // // return $event;
 
-        //permet de charger les relations 'user' et 'attendees' du model
-        $event->load('user', 'attendees');
-        // permet de renvoyée les ressources sous forme de tableau en passant par EventReource
-        return new EventResource($event);
+        // //permet de charger les relations 'user' et 'attendees' du model
+        // $event->load('user', 'attendees');
+        // // permet de renvoyée les ressources sous forme de tableau en passant par EventReource
+        // return new EventResource($event);
+        /* #endregion */
+
+        return new EventResource($this->loadRelationships($event));
     }
 
     /**
@@ -132,7 +150,8 @@ class EventController extends Controller
         // return $event; // la bonne pratique est de retourner la roussource modifiée
 
         // permet de renvoyée les ressources sous forme de tableau en passant par EventReource
-        return new EventResource($event);
+        // return new EventResource($event);
+        return new EventResource($this->loadRelationships($event));
     }
 
     /**
