@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller; // depuis laravel 11 la classe de base 'controler' n'herite plus de \Illuminate\Routing\Controller (il faut donc l'adapter nous meme)
 use App\Http\Resources\EventResource;
 use App\Http\Traits\CanLoadRelationships;
 use Illuminate\Http\Request;
 use \App\Models\Event;
+use Illuminate\Support\Facades\Gate;
 
 class EventController extends Controller
 {
@@ -14,6 +15,13 @@ class EventController extends Controller
     use CanLoadRelationships;
     // c'est ici que l'on controle ce qui px etre charger de ce que ne px pas l'etre (apres le ?include dans l'url)
     private array $relations = ['user', 'attendees', 'attendees.user'];
+
+    // on applique le middleware dans le constructeur du controlleur pour ne pas devoir traiter chaque route individuellement
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum')->except(['index', 'show']);
+        $this->authorizeResource(Event::class, 'event');
+    }
     /**
      * Display a listing of the resource.
      */
@@ -108,7 +116,8 @@ class EventController extends Controller
                 'start_time' => 'required|date',
                 'end_time' => 'required|date|after:start_time'
             ]),
-            'user_id' => 1
+            // 'user_id' => 1
+            'user_id' => $request->user()->id
         ]);
         /* #endregion */
 
@@ -137,6 +146,18 @@ class EventController extends Controller
      */
     public function update(Request $request, Event $event) //route model binding : l'ID de l'objet est trouver automatiquement par laravel grace a la route (ex:/events/5)
     {
+        /* #region V1 avec gate */
+        // if (Gate::denies('update-event', $event)) {
+        //     abort(403, 'Vous n\'est pas autorisé a modifier cette évenement');
+        // }
+        /* #endregion */
+
+        /* #region V1 plus concis */
+        // Gate::authorize('update-event', $event);
+        // $this->authorize('update-event', $event);
+        // plus necessaire car nous avons ajouter $this->authorizeResource(Event::class, 'event'); au constructeur
+        /* #endregion */
+
         $event->update(
             $request->validate([
                 'name' => 'sometimes|string|max:255',

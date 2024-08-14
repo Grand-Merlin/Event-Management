@@ -5,12 +5,12 @@ namespace App\Http\Traits;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Contracts\Database\Query\Builder as QueryBuilder;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // un trait est un morceau de code regroupe plusieur fonction et/ou methodes afin de l'apporter dans differente classe pour pouvoir les reutiliser sans reecrire les meme methode plusieur fois dans les classe differente
 trait CanLoadRelationships
 {
-    public function loadRelationships(Model|EloquentBuilder|QueryBuilder $for, ?array $relations = null) : Model|EloquentBuilder|QueryBuilder {
+    public function loadRelationships(Model|EloquentBuilder|QueryBuilder|HasMany $for, ?array $relations = null) : Model|EloquentBuilder|QueryBuilder|HasMany {
 
         $relations = $relations ?? $this->relations ?? [];
         foreach($relations as $relation){
