@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -15,6 +17,10 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 Route::apiResource('events', EventController::class);
+
+RateLimiter::for('api', function (Request $request) {
+    return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+});
 
 // Ressource imbriquée, cela signifie que les participant sont associer a un evemenet specifique (l'URL refletera cette relation perent-enfant)
 Route::apiResource('events.attendees', AttendeeController::class)

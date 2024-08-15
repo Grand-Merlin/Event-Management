@@ -20,6 +20,11 @@ class EventController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum')->except(['index', 'show']);
+        // permet la limitation des requetes api (ici 60 requete par minute)
+        // $this->middleware('throttle:60,1')
+        // ou de maniere plus generique dans \route\api.php
+        $this->middleware('throttle:api')
+        ->only(['store', 'update', 'destroy']);
         $this->authorizeResource(Event::class, 'event');
     }
     /**

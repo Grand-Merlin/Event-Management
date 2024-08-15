@@ -22,6 +22,11 @@ class AttendeeController extends Controller
         public function __construct()
         {
             $this->middleware('auth:sanctum')->except(['index', 'show']);
+            // permet la limitation des requetes api (ici 60 requete par minute)
+            // $this->middleware('throttle:60,1')
+            // ou de maniere plus generique dans \route\api.php
+            $this->middleware('throttle:api')
+                ->only(['store', 'destroy']);
             $this->authorizeResource(Attendee::class, 'attendee');
         }
 
@@ -61,7 +66,7 @@ class AttendeeController extends Controller
         /* #endregion */
 
         $attendee = $this->loadRelationships($event->attendees()->create([
-            'user_id'=> 1
+            'user_id'=> $request->user()->id
         ]));
         return new AttendeeResource($attendee); // la bonne pratique est de retourner la roussource modifiée
 
